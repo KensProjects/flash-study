@@ -1,13 +1,14 @@
-import { relations, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import {
   index,
   integer,
   pgTableCreator,
   primaryKey,
-  serial,
   text,
   timestamp,
   varchar,
+  pgEnum,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 
@@ -19,44 +20,64 @@ import { type AdapterAccount } from "next-auth/adapters";
  */
 export const createTable = pgTableCreator((name) => `flash-study_${name}`);
 
-export const posts = createTable(
-  "post",
-  {
-    id: serial("id").primaryKey(),
-    name: varchar("name", { length: 256 }),
-    createdById: varchar("createdById", { length: 255 })
-      .notNull()
-      .references(() => users.id),
-    createdAt: timestamp("created_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp("updatedAt"),
-  },
-  (example) => ({
-    createdByIdIdx: index("createdById_idx").on(example.createdById),
-    nameIndex: index("name_idx").on(example.name),
-  })
-);
+export const UserRole = pgEnum("userRole", ["ADMIN", "BASIC", "BANNED"])
 
 export const users = createTable("user", {
-  id: varchar("id", { length: 255 }).notNull().primaryKey(),
-  name: varchar("name", { length: 255 }),
-  email: varchar("email", { length: 255 }).notNull(),
+  id: varchar("id", { length: 255 }).primaryKey(),
+  name: text("name"),
+  email: text("email").notNull(),
   emailVerified: timestamp("emailVerified", {
     mode: "date",
-  }).default(sql`CURRENT_TIMESTAMP`),
-  image: varchar("image", { length: 255 }),
-});
+  }).defaultNow(),
+  image: text("image"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  role: UserRole("userRole").default("BASIC").notNull(),
+  isPrivate: boolean("isPrivate").notNull().default(false)
+},
+  (user) => ({
+    idIdx: index("id_idx").on(user.id),
+    nameIdx: index("name_idx").on(user.name)
+  })
+)
 
-export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
-}));
+export const cards = createTable(
+  "card",
+  {
+    id: text("id").primaryKey(),
+    question: text('question').notNull().unique(),
+    answer: text('answer').notNull(),
+    createdById: text("createdById")
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+    cardDeckId: text("cardDeckId").notNull().references(() => cardDecks.id, { onDelete: 'cascade' }),
+  },
+  (card) => ({
+    createdByIdIdx: index("createdById_idx").on(card.createdById),
+    questionIndex: index("question_idx").on(card.question),
+  })
+)
+
+export const cardDecks = createTable(
+  'cardDeck',
+  {
+    id: text("id").primaryKey(),
+    name: text('name').notNull(),
+    createdById: varchar("createdById")
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  }, (cardDeck) => ({
+    cardDeckIdx: index("cardDeck_Idx").on(cardDeck.id, cardDeck.name)
+  })
+)
 
 export const accounts = createTable(
   "account",
   {
-    userId: varchar("userId", { length: 255 })
-      .notNull()
+    userId: varchar("userId", { length: 255 }).notNull()
       .references(() => users.id),
     type: varchar("type", { length: 255 })
       .$type<AdapterAccount["type"]>()
@@ -79,9 +100,6 @@ export const accounts = createTable(
   })
 );
 
-export const accountsRelations = relations(accounts, ({ one }) => ({
-  user: one(users, { fields: [accounts.userId], references: [users.id] }),
-}));
 
 export const sessions = createTable(
   "session",
@@ -99,10 +117,6 @@ export const sessions = createTable(
   })
 );
 
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, { fields: [sessions.userId], references: [users.id] }),
-}));
-
 export const verificationTokens = createTable(
   "verificationToken",
   {
@@ -114,3 +128,27 @@ export const verificationTokens = createTable(
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
   })
 );
+
+export const cardDeckRelations = relations(cardDecks, ({ one, many }) => ({
+  cards: many(cards),
+  createdBy: one(users, { fields: [cardDecks.createdById], references: [users.id] }),
+}))
+
+export const cardRelations = relations(cards, ({ one }) => ({
+  createdBy: one(users, { fields: [cards.createdById], references: [users.id] }),
+  cardDeck: one(cardDecks, { fields: [cards.cardDeckId], references: [cardDecks.id] }),
+}))
+
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  cards: many(cards),
+  cardDecks: many(cardDecks)
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, { fields: [sessions.userId], references: [users.id] }),
+}));
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, { fields: [accounts.userId], references: [users.id] }),
+}));
