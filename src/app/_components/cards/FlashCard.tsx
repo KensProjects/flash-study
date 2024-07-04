@@ -14,7 +14,7 @@ export default function FlashCard({ question, answer, id }: FlashCardType) {
   }
 
   return (
-    <Card className={`w-11/12 lg:w-full h-full flex flex-col justify-between items-center bg-slate-100 text-center border-black border relative overflow-auto`}>
+    <Card className={`w-3/4 h-full flex flex-col justify-between items-center p-8 bg-slate-100 text-center border-black border relative overflow-auto`}>
       <CardHeader onClick={() => flipCard()} className="cursor-pointer p-1">
         <CardTitle className="mt-4 underline underline-offset-2">{!isRevealed ? "Question" : "Answer"}</CardTitle>
         <CardDescription className="text-xl font-bold text-center">

@@ -19,7 +19,7 @@ export default async function NavbarButtonGroup() {
     }
 
     const authButtonOpts: DialogTypes[] = [{ href: session ? '/api/auth/signout' : "/api/auth/signin", text: session ? "Signout" : "Signin" }, {
-        href: `/user/${session?.user.id}`, text: 'User Page'
+        href: `/user/${session?.user.id}`, text: 'Profile'
     }]
 
     return (
@@ -31,9 +31,9 @@ export default async function NavbarButtonGroup() {
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Paths</DialogTitle>
+                    <DialogTitle>Options</DialogTitle>
                     <DialogDescription>
-                   Select path below.
+                   Select option below.
                     </DialogDescription>
                 </DialogHeader>
                 <ul className="w-full h-auto flex flex-row-reverse justify-center items-center">

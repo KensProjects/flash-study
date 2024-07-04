@@ -40,7 +40,7 @@ export default function CreateCardButton({ deckId }: { deckId: string }) {
         <AlertDialog >
             <AlertDialogTrigger className="flex justify-center items-center h-full w-fit rounded-md" asChild>
                 <Button>
-                    Create
+                    Create Card
                 </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

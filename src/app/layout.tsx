@@ -4,7 +4,6 @@ import { Inter } from "next/font/google";
 import { TRPCReactProvider } from "~/trpc/react";
 import Provider from "./_components/Provider";
 import Navbar from "./_components/Layout/Navbar/Navbar";
-import Sidebar from "./_components/Layout/Sidebar";
 import MobileNavbar from "./_components/Layout/Navbar/MobileNavbar";
 
 const inter = Inter({
@@ -29,10 +28,7 @@ export default function RootLayout({
         <TRPCReactProvider>
           <Provider>
             <Navbar />
-            <div id="container" className="flex w-auto h-full mb-20">
-              <Sidebar />
               {children}
-            </div>
             <MobileNavbar />
           </Provider>
         </TRPCReactProvider>
